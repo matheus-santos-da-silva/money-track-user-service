@@ -1,8 +1,11 @@
 import { Module } from "@nestjs/common";
-import { CreateUserProtocol } from "src/domain/use-cases-protocol/create-user";
-import { CreateUserUseCase } from "./create-user-use-case";
 import { UsersRepositoriesModule } from "src/infra/database/repositories/users-repositories.module";
 import { UsersServicesModule } from "src/domain/services/users-services.module";
+import { SignInUserUseCase, CreateUserUseCase } from "./";
+import {
+  SignInUserProtocol,
+  CreateUserProtocol,
+} from "src/domain/use-cases-protocol/";
 
 @Module({
   imports: [UsersRepositoriesModule, UsersServicesModule],
@@ -11,7 +14,11 @@ import { UsersServicesModule } from "src/domain/services/users-services.module";
       provide: CreateUserProtocol,
       useClass: CreateUserUseCase,
     },
+    {
+      provide: SignInUserProtocol,
+      useClass: SignInUserUseCase,
+    },
   ],
-  exports: [CreateUserProtocol],
+  exports: [CreateUserProtocol, SignInUserProtocol],
 })
 export class UsersUseCasesModule {}
