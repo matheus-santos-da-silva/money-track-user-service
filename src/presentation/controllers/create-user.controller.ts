@@ -9,7 +9,11 @@ export class CreateUserController {
   @Post()
   async execute(@Body() { email, password }: CreateUserDTO) {
     try {
-      await this.createUserUseCase.create({ email, password });
+      const { token } = await this.createUserUseCase.create({
+        email,
+        password,
+      });
+      return { token };
     } catch (error) {
       throw error;
     }
