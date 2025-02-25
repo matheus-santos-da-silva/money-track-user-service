@@ -1,6 +1,6 @@
 import { AuthenticateUserResponseDTO } from "../DTO/authenticate-user-response-DTO";
-import { CreateUserDTO } from "../DTO/create-user-DTO";
+import { UserAuthDTO } from "../DTO/user-auth-DTO";
 
 export abstract class CreateUserProtocol {
-  abstract create(data: CreateUserDTO): Promise<AuthenticateUserResponseDTO>;
+  abstract create(data: UserAuthDTO): Promise<AuthenticateUserResponseDTO>;
 }

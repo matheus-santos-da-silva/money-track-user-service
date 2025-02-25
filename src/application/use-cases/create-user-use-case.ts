@@ -4,7 +4,7 @@ import {
   Injectable,
 } from "@nestjs/common";
 import { AuthenticateUserResponseDTO } from "src/domain/DTO/authenticate-user-response-DTO";
-import { CreateUserDTO } from "src/domain/DTO/create-user-DTO";
+import { UserAuthDTO } from "src/domain/DTO/user-auth-DTO";
 import { CreateUserServiceProtocol } from "src/domain/services/protocols/create-user-service-protocol";
 import { CreateUserProtocol } from "src/domain/use-cases-protocol/create-user";
 import { UsersRepositoryProtocol } from "src/infra/database/repositories/protocols/users-repository-protocol";
@@ -20,7 +20,7 @@ export class CreateUserUseCase implements CreateUserProtocol {
   async create({
     email,
     password,
-  }: CreateUserDTO): Promise<AuthenticateUserResponseDTO> {
+  }: UserAuthDTO): Promise<AuthenticateUserResponseDTO> {
     try {
       const userAlreadyExists = await this.repository.findByEmail(email);
       if (userAlreadyExists) {
