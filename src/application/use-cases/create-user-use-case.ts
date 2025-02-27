@@ -4,7 +4,7 @@ import {
   Injectable,
 } from "@nestjs/common";
 import { AuthenticateUserResponseDTO } from "src/domain/DTO/authenticate-user-response-DTO";
-import { UserAuthDTO } from "src/domain/DTO/user-auth-DTO";
+import { CreateUserDTO } from "src/domain/DTO/create-user-DTO";
 import { CreateUserServiceProtocol } from "src/domain/services/protocols/create-user-service-protocol";
 import { CreateUserProtocol } from "src/domain/use-cases-protocol/create-user";
 import { UsersRepositoryProtocol } from "src/infra/database/repositories/protocols/users-repository-protocol";
@@ -19,15 +19,16 @@ export class CreateUserUseCase implements CreateUserProtocol {
 
   async create({
     email,
+    name,
     password,
-  }: UserAuthDTO): Promise<AuthenticateUserResponseDTO> {
+  }: CreateUserDTO): Promise<AuthenticateUserResponseDTO> {
     try {
       const userAlreadyExists = await this.repository.findByEmail(email);
       if (userAlreadyExists) {
         throw new ConflictException("Usuário já cadastrado. Acesse sua conta!");
       }
 
-      const user = await this.service.create({ email, password });
+      const user = await this.service.create({ email, name, password });
       const createdUser = await this.repository.create(user);
       if (!createdUser) {
         throw new BadRequestException(
