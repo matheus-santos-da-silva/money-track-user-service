@@ -1,6 +1,6 @@
 import { compare } from "bcrypt";
 import { AuthenticateUserResponseDTO } from "src/domain/DTO/authenticate-user-response-DTO";
-import { UserAuthDTO } from "src/domain/DTO/user-auth-DTO";
+import { SignInUserDTO } from "src/domain/DTO/user-signIn-DTO";
 import { SignInUserProtocol } from "src/domain/use-cases-protocol/sign-in-user";
 import { UsersRepositoryProtocol } from "src/infra/database/repositories/protocols/users-repository-protocol";
 import { createUserToken } from "src/shared/utils/create-user-token";
@@ -17,7 +17,7 @@ export class SignInUserUseCase implements SignInUserProtocol {
   async signIn({
     email,
     password,
-  }: UserAuthDTO): Promise<AuthenticateUserResponseDTO> {
+  }: SignInUserDTO): Promise<AuthenticateUserResponseDTO> {
     try {
       const user = await this.repository.findByEmail(email);
       if (!user) {
