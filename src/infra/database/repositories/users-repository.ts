@@ -22,10 +22,10 @@ export class UsersRepository implements UsersRepositoryProtocol {
     }
   }
 
-  async create({ email, password, plan }: User): Promise<User> {
+  async create({ email, name, password, plan }: User): Promise<User> {
     try {
       const user = await this.prisma.user.create({
-        data: { email, password, plan },
+        data: { email, name, password, plan },
       });
 
       return user;
