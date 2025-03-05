@@ -2,6 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { SignInUserUseCase } from "../../src/application/use-cases";
 import { UsersRepositoryProtocol } from "../../src/infra/database/repositories/protocols/users-repository-protocol";
 import { signInInputMock, createdUserMock } from "../mocks/";
+import { InMemoryUserRepository } from "../in-memory-repositories/in-memory-user-repository";
 import * as bcrypt from "bcrypt";
 
 jest.spyOn(bcrypt, "compare");
@@ -16,9 +17,7 @@ describe("SignIn User UseCase", () => {
         SignInUserUseCase,
         {
           provide: UsersRepositoryProtocol,
-          useFactory: () => ({
-            findByEmail: jest.fn().mockResolvedValue(createdUserMock),
-          }),
+          useClass: InMemoryUserRepository,
         },
       ],
     }).compile();
@@ -34,19 +33,20 @@ describe("SignIn User UseCase", () => {
     expect(usersRepository).toBeDefined();
   });
 
-  it("should be return a token when signIn is successful", () => {
+  it("should be return a token when signIn is successful", async () => {
+    await usersRepository.create(createdUserMock);
     (bcrypt.compare as jest.Mock).mockResolvedValue(true);
     const result = useCase.signIn(signInInputMock);
     expect(result).resolves.toHaveProperty("token");
   });
 
   it("should throw an exception when the user does not exist", () => {
-    jest.spyOn(usersRepository, "findByEmail").mockResolvedValue(null);
     const result = useCase.signIn(signInInputMock);
     expect(result).rejects.toThrow("Email não cadastrado. Crie uma conta!");
   });
 
-  it("should throw an exception when the password is wrong", () => {
+  it("should throw an exception when the password is wrong", async () => {
+    await usersRepository.create(createdUserMock);
     (bcrypt.compare as jest.Mock).mockResolvedValue(false);
     const result = useCase.signIn(signInInputMock);
     expect(result).rejects.toThrow("Senha incorreta. Tente novamente!");
