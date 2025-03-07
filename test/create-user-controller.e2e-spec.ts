@@ -39,13 +39,13 @@ describe("Create User Controller (e2e) - (POST /users)", () => {
   });
 
   it("should return a status code 400 when the user is not created", async () => {
-    const inputWithoutPassword = {
+    const inputWithoutName = {
       email: "johndoe@email.com",
-      name: "John Doe",
+      password: "test",
     };
     await request(app.getHttpServer())
       .post("/users")
-      .send(inputWithoutPassword)
+      .send(inputWithoutName)
       .expect(400);
   });
 });
