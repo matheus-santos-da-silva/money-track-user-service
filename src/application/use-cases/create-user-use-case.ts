@@ -1,20 +1,26 @@
+import { CreateUserDTO } from "src/domain/DTO/create-user-DTO";
+import { createUserToken } from "src/shared/utils/create-user-token";
+import { CreateUserProtocol } from "src/domain/use-cases-protocol/create-user";
+import { KafkaProducerService } from "src/infra/kafka/producers/kafka-producer.service";
+import { UsersRepositoryProtocol } from "src/infra/database/repositories/protocols/users-repository-protocol";
+import { CreateUserServiceProtocol } from "src/domain/services/protocols/create-user-service-protocol";
+import { AuthenticateUserResponseDTO } from "src/domain/DTO/authenticate-user-response-DTO";
 import {
   BadRequestException,
   ConflictException,
   Injectable,
 } from "@nestjs/common";
-import { AuthenticateUserResponseDTO } from "src/domain/DTO/authenticate-user-response-DTO";
-import { CreateUserDTO } from "src/domain/DTO/create-user-DTO";
-import { CreateUserServiceProtocol } from "src/domain/services/protocols/create-user-service-protocol";
-import { CreateUserProtocol } from "src/domain/use-cases-protocol/create-user";
-import { UsersRepositoryProtocol } from "src/infra/database/repositories/protocols/users-repository-protocol";
-import { createUserToken } from "src/shared/utils/create-user-token";
+
+interface UserCreatedPayload {
+  id: string;
+}
 
 @Injectable()
 export class CreateUserUseCase implements CreateUserProtocol {
   constructor(
     private readonly service: CreateUserServiceProtocol,
-    private readonly repository: UsersRepositoryProtocol
+    private readonly repository: UsersRepositoryProtocol,
+    private readonly kafkaProducer: KafkaProducerService
   ) {}
 
   async create({
@@ -36,6 +42,11 @@ export class CreateUserUseCase implements CreateUserProtocol {
         );
       }
       const token = await createUserToken({ id: createdUser.id });
+      await this.kafkaProducer.send<UserCreatedPayload>({
+        topic: "user-created",
+        key: "user-created",
+        value: { id: createdUser.id },
+      });
       return { token };
     } catch (error) {
       throw error;
