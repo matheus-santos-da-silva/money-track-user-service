@@ -1,24 +1,51 @@
 import { User } from "src/domain/entities/user";
+import { UpdateUserDTO } from "src/domain/DTO/update-user-DTO";
 import { PrismaService } from "../config/prisma.service";
-import { UsersRepositoryProtocol } from "./protocols/users-repository-protocol";
 import { FindUserResponseDTO } from "src/domain/DTO/find-user-response-DTO";
+import { CreateUserResponseDTO } from "src/domain/DTO/create-user-response-DTO";
+import { findByEmailResponseDTO } from "src/domain/DTO/find-by-email-response-DTO";
+import { UsersRepositoryProtocol } from "./protocols/users-repository-protocol";
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { CreateUserResponseDTO } from "src/domain/DTO/create-user-response-DTO";
-import { findByEmailResponseDTO } from "src/domain/DTO/find-by-email-response-DTO";
 
 @Injectable()
 export class UsersRepository implements UsersRepositoryProtocol {
   constructor(private readonly prisma: PrismaService) {}
 
+  async findPasswordById(id: string): Promise<{ password: string }> {
+    try {
+      const userPassword = await this.prisma.user.findFirst({
+        where: { id },
+        select: { password: true },
+      });
+
+      return userPassword;
+    } catch (error) {
+      throw new NotFoundException(
+        "Erro ao tentar encontrar o usuário, tente novamente!"
+      );
+    }
+  }
+
+  async update(id: string, data: UpdateUserDTO) {
+    try {
+      await this.prisma.user.update({
+        where: { id },
+        data,
+      });
+    } catch (error) {
+      throw new BadRequestException("Erro ao atualizar o usuário!");
+    }
+  }
+
   async findById(id: string): Promise<FindUserResponseDTO> {
     try {
       const user = await this.prisma.user.findFirst({
         where: { id },
-        select: { id: true, name: true },
+        select: { id: true, name: true, email: true },
       });
       return user;
     } catch (error) {
