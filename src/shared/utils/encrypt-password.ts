@@ -1,4 +1,4 @@
-import { genSaltSync, hash } from "bcrypt";
+import { genSaltSync, hash } from "bcryptjs";
 
 export const encryptPass = async (password: string) => {
   const salt = genSaltSync(12);

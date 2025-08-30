@@ -1,9 +1,9 @@
-import { compare } from "bcrypt";
-import { AuthenticateUserResponseDTO } from "src/domain/DTO/authenticate-user-response-DTO";
+import { compare } from "bcryptjs";
 import { SignInUserDTO } from "src/domain/DTO/user-signIn-DTO";
+import { createUserToken } from "src/shared/utils/create-user-token";
 import { SignInUserProtocol } from "src/domain/use-cases-protocol/sign-in-user";
 import { UsersRepositoryProtocol } from "src/infra/database/repositories/protocols/users-repository-protocol";
-import { createUserToken } from "src/shared/utils/create-user-token";
+import { AuthenticateUserResponseDTO } from "src/domain/DTO/authenticate-user-response-DTO";
 import {
   BadRequestException,
   Injectable,
