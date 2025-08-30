@@ -1,9 +1,9 @@
-import { Test, TestingModule } from "@nestjs/testing";
 import { SignInUserUseCase } from "../../src/application/use-cases";
+import { Test, TestingModule } from "@nestjs/testing";
+import { InMemoryUserRepository } from "../in-memory-repositories/in-memory-user-repository";
 import { UsersRepositoryProtocol } from "../../src/infra/database/repositories/protocols/users-repository-protocol";
 import { signInInputMock, createdUserMock } from "../mocks/";
-import { InMemoryUserRepository } from "../in-memory-repositories/in-memory-user-repository";
-import * as bcrypt from "bcrypt";
+import * as bcrypt from "bcryptjs";
 
 jest.spyOn(bcrypt, "compare");
 
