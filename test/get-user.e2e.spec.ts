@@ -1,26 +1,37 @@
 import * as request from "supertest";
-import { Test, TestingModule } from "@nestjs/testing";
-import { INestApplication } from "@nestjs/common";
+import { Test } from "@nestjs/testing";
 import { AppModule } from "../src/app.module";
 import { PrismaService } from "src/infra/database/config/prisma.service";
+import { INestApplication } from "@nestjs/common";
+import { kafkaProducerMock } from "./mocks/kafka-mock";
 import { createUserInputMock } from "./mocks";
+import { KafkaProducerService } from "src/infra/kafka/producers/kafka-producer.service";
 
 describe("Get User Controller (e2e) - (GET /users)", () => {
   let app: INestApplication;
   let prismaService: PrismaService;
 
-  beforeEach(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    const moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideProvider(KafkaProducerService)
+      .useValue(kafkaProducerMock)
+      .compile();
 
     app = moduleFixture.createNestApplication();
     prismaService = moduleFixture.get<PrismaService>(PrismaService);
     await app.init();
   });
 
-  afterEach(async () => {
+  beforeEach(async () => {
     await prismaService.user.deleteMany({});
+  });
+
+  afterAll(async () => {
+    await prismaService.user.deleteMany({});
+    await prismaService.$disconnect();
+    await app.close();
   });
 
   it("should return 200 status code when it is all ok", async () => {
