@@ -1,9 +1,10 @@
-import { Test, TestingModule } from "@nestjs/testing";
 import { CreateUserUseCase } from "../../src/application/use-cases";
-import { CreateUserServiceProtocol } from "../../src/domain/services/protocols";
-import { UsersRepositoryProtocol } from "../../src/infra/database/repositories/protocols/users-repository-protocol";
-import { createUserInputMock, createdUserMock } from "../mocks/";
+import { Test, TestingModule } from "@nestjs/testing";
+import { KafkaProducerService } from "src/infra/kafka/producers/kafka-producer.service";
 import { InMemoryUserRepository } from "../in-memory-repositories/in-memory-user-repository";
+import { UsersRepositoryProtocol } from "../../src/infra/database/repositories/protocols/users-repository-protocol";
+import { CreateUserServiceProtocol } from "../../src/domain/services/protocols";
+import { createUserInputMock, createdUserMock } from "../mocks/";
 
 describe("Create User UseCase", () => {
   let useCase: CreateUserUseCase;
@@ -23,6 +24,12 @@ describe("Create User UseCase", () => {
         {
           provide: UsersRepositoryProtocol,
           useClass: InMemoryUserRepository,
+        },
+        {
+          provide: KafkaProducerService,
+          useFactory: () => ({
+            send: jest.fn().mockResolvedValue(true),
+          }),
         },
       ],
     }).compile();
