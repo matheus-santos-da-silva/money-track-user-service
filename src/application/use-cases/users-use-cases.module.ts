@@ -4,11 +4,19 @@ import { UsersServicesModule } from "src/domain/services/users-services.module";
 import { KafkaProducerService } from "src/infra/kafka/producers/kafka-producer.service";
 import { UsersRepositoriesModule } from "src/infra/database/repositories/users-repositories.module";
 import { ClientKafka, ClientsModule, Transport } from "@nestjs/microservices";
-import { SignInUserUseCase, CreateUserUseCase, GetUserUseCase } from "./";
+import {
+  SignInUserUseCase,
+  CreateUserUseCase,
+  GetUserUseCase,
+  UpdateUserUseCase,
+  UpdatePasswordUseCase,
+} from "./";
 import {
   SignInUserProtocol,
   CreateUserProtocol,
   GetUserProtocol,
+  UpdateUserProtocol,
+  UpdatePasswordProtocol,
 } from "src/domain/use-cases-protocol/";
 
 @Module({
@@ -42,6 +50,14 @@ import {
       useClass: GetUserUseCase,
     },
     {
+      provide: UpdateUserProtocol,
+      useClass: UpdateUserUseCase,
+    },
+    {
+      provide: UpdatePasswordProtocol,
+      useClass: UpdatePasswordUseCase,
+    },
+    {
       provide: "KAFKA_PRODUCER",
       useFactory: async (kafkaService: ClientKafka): Promise<Producer> => {
         return kafkaService.connect();
@@ -49,6 +65,12 @@ import {
       inject: ["KAFKA_SERVICE"],
     },
   ],
-  exports: [CreateUserProtocol, SignInUserProtocol, GetUserProtocol],
+  exports: [
+    CreateUserProtocol,
+    SignInUserProtocol,
+    GetUserProtocol,
+    UpdateUserProtocol,
+    UpdatePasswordProtocol,
+  ],
 })
 export class UsersUseCasesModule {}
