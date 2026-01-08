@@ -1,3 +1,4 @@
+import { Throttle } from "@nestjs/throttler";
 import { AuthGuard } from "src/application/auth/auth.guard";
 import { UpdatePasswordDTO } from "src/domain/DTO/update-password-DTO";
 import { UpdatePasswordProtocol } from "src/domain/use-cases-protocol/update-password";
@@ -16,6 +17,7 @@ import {
 export class UpdatePasswordController {
   constructor(private readonly updatePasswordUseCase: UpdatePasswordProtocol) {}
 
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   @Patch(":id/password")
   async execute(
     @Req() req: Request,
