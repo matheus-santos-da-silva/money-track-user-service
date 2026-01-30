@@ -25,7 +25,7 @@ export class UsersRepository implements UsersRepositoryProtocol {
       return userPassword;
     } catch (error) {
       throw new NotFoundException(
-        "Erro ao tentar encontrar o usuário, tente novamente!"
+        "Erro ao tentar encontrar o usuário, tente novamente!",
       );
     }
   }
@@ -45,12 +45,18 @@ export class UsersRepository implements UsersRepositoryProtocol {
     try {
       const user = await this.prisma.user.findFirst({
         where: { id },
-        select: { id: true, name: true, email: true },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          plan: true,
+          trialEndsAt: true,
+        },
       });
       return user;
     } catch (error) {
       throw new NotFoundException(
-        "Erro ao tentar encontrar o usuário, tente novamente!"
+        "Erro ao tentar encontrar o usuário, tente novamente!",
       );
     }
   }
@@ -64,7 +70,7 @@ export class UsersRepository implements UsersRepositoryProtocol {
       return user;
     } catch (error) {
       throw new NotFoundException(
-        "Erro ao tentar encontrar o usuário, tente novamente!"
+        "Erro ao tentar encontrar o usuário, tente novamente!",
       );
     }
   }
@@ -74,17 +80,26 @@ export class UsersRepository implements UsersRepositoryProtocol {
     name,
     password,
     plan,
+    trialStartedAt,
+    trialEndsAt,
   }: User): Promise<CreateUserResponseDTO> {
     try {
       const user = await this.prisma.user.create({
-        data: { email, name, password, plan },
+        data: {
+          email,
+          name,
+          password,
+          plan,
+          trialStartedAt,
+          trialEndsAt,
+        },
         select: { id: true },
       });
 
       return user;
     } catch (error) {
       throw new BadRequestException(
-        "Erro ao criar o usuário, tente novamente!"
+        "Erro ao criar o usuário, tente novamente!",
       );
     }
   }
