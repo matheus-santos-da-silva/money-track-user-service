@@ -1,3 +1,4 @@
+import { Plan } from "@prisma/client";
 import { CreateUserDTO } from "src/domain/DTO/create-user-DTO";
 import { createUserToken } from "src/shared/utils/create-user-token";
 import { CreateUserProtocol } from "src/domain/use-cases-protocol/create-user";
@@ -13,6 +14,8 @@ import {
 
 interface UserCreatedPayload {
   id: string;
+  plan: Plan;
+  trialEndsAt: Date;
 }
 
 @Injectable()
@@ -20,7 +23,7 @@ export class CreateUserUseCase implements CreateUserProtocol {
   constructor(
     private readonly service: CreateUserServiceProtocol,
     private readonly repository: UsersRepositoryProtocol,
-    private readonly kafkaProducer: KafkaProducerService
+    private readonly kafkaProducer: KafkaProducerService,
   ) {}
 
   async create({
@@ -34,19 +37,29 @@ export class CreateUserUseCase implements CreateUserProtocol {
         throw new ConflictException("Usuário já cadastrado. Acesse sua conta!");
       }
 
-      const user = await this.service.create({ email, name, password });
+      const user = await this.service.create({
+        email,
+        name,
+        password,
+      });
+
       const createdUser = await this.repository.create(user);
       if (!createdUser) {
         throw new BadRequestException(
-          "Erro na criação do usuário, tente novamente mais tarde!"
+          "Erro na criação do usuário, tente novamente mais tarde!",
         );
       }
       const token = await createUserToken({ id: createdUser.id });
       await this.kafkaProducer.send<UserCreatedPayload>({
         topic: "user-created",
         key: "user-created",
-        value: { id: createdUser.id },
+        value: {
+          id: createdUser.id,
+          plan: user.plan,
+          trialEndsAt: user.trialEndsAt,
+        },
       });
+      
       return { token };
     } catch (error) {
       throw error;
