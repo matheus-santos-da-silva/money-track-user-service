@@ -7,6 +7,8 @@ import {
   SignInUserController,
   UpdateUserController,
   UpdatePasswordController,
+  ValidatePurchaseController,
+  GooglePlayWebhookController,
 } from ".";
 
 @Module({
@@ -17,6 +19,8 @@ import {
     GetUserController,
     UpdateUserController,
     UpdatePasswordController,
+    ValidatePurchaseController,
+    GooglePlayWebhookController,
   ],
 })
 export class UsersControllersModule {}

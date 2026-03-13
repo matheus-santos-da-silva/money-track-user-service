@@ -3,6 +3,7 @@ import { UpdateUserDTO } from "src/domain/DTO/update-user-DTO";
 import { PrismaService } from "../config/prisma.service";
 import { FindUserResponseDTO } from "src/domain/DTO/find-user-response-DTO";
 import { CreateUserResponseDTO } from "src/domain/DTO/create-user-response-DTO";
+import { UpdateSubscriptionDTO } from "src/domain/DTO/update-subscription-DTO";
 import { findByEmailResponseDTO } from "src/domain/DTO/find-by-email-response-DTO";
 import { UsersRepositoryProtocol } from "./protocols/users-repository-protocol";
 import {
@@ -72,6 +73,34 @@ export class UsersRepository implements UsersRepositoryProtocol {
       throw new NotFoundException(
         "Erro ao tentar encontrar o usuário, tente novamente!",
       );
+    }
+  }
+
+  async findByPurchaseToken(token: string): Promise<{ id: string } | null> {
+    try {
+      const user = await this.prisma.user.findFirst({
+        where: { subscriptionPurchaseToken: token },
+        select: { id: true },
+      });
+      return user;
+    } catch (error) {
+      throw new NotFoundException(
+        "Erro ao tentar encontrar o usuário, tente novamente!",
+      );
+    }
+  }
+
+  async updateSubscription(
+    id: string,
+    data: UpdateSubscriptionDTO,
+  ): Promise<void> {
+    try {
+      await this.prisma.user.update({
+        where: { id },
+        data,
+      });
+    } catch (error) {
+      throw new BadRequestException("Erro ao atualizar assinatura do usuário!");
     }
   }
 
