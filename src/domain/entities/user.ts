@@ -18,6 +18,8 @@ export class User {
   created_at: Date;
   trialStartedAt: Date;
   trialEndsAt: Date;
+  subscriptionPurchaseToken?: string | null;
+  subscriptionExpiresAt?: Date | null;
 
   constructor({
     email,

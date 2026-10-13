@@ -38,6 +38,27 @@ describe("Update User UseCase", () => {
     expect(name).toEqual("updated-name");
   });
 
+  it("should throw a conflict when the email belongs to another user", async () => {
+    await usersRepository.create(createdUserMock);
+    await usersRepository.create({
+      ...createdUserMock,
+      id: "another-user-id",
+      email: "taken@email.com",
+    });
+
+    await expect(
+      useCase.update(createdUserMock.id, { email: "taken@email.com" })
+    ).rejects.toThrow("E-mail já está em uso.");
+  });
+
+  it("should allow keeping the user's own email", async () => {
+    await usersRepository.create(createdUserMock);
+
+    await expect(
+      useCase.update(createdUserMock.id, { email: createdUserMock.email })
+    ).resolves.toBeUndefined();
+  });
+
   it("should throw an exception when the user not exists", () => {
     const result = useCase.update("invalid-id", { name: "updated-name" });
     expect(result).rejects.toThrow("Usuário não existe!");

@@ -1,4 +1,4 @@
-import * as request from "supertest";
+import request from "supertest";
 import { Test } from "@nestjs/testing";
 import { AppModule } from "../src/app.module";
 import { PrismaService } from "src/infra/database/config/prisma.service";
@@ -53,7 +53,7 @@ describe("Update Password Controller (e2e) - (PATCH /users/:id/password)", () =>
       .expect(200);
   });
 
-  it("should return a status code 401 when the password if currentPassword is invalid", async () => {
+  it("should return a status code 403 when the password if currentPassword is invalid", async () => {
     const { body } = await request(app.getHttpServer())
       .post(`/users`)
       .send(createUserInputMock);
@@ -69,12 +69,12 @@ describe("Update Password Controller (e2e) - (PATCH /users/:id/password)", () =>
         currentPassword: "invalid-password",
         newPassword: "new-password",
       })
-      .expect(401);
+      .expect(403);
 
     expect(response.body.message).toBe("Não foi possível atualizar a senha");
   });
 
-  it("should return a status code 401 when token id is different of path id", async () => {
+  it("should return a status code 403 when token id is different of path id", async () => {
     const { body } = await request(app.getHttpServer())
       .post(`/users`)
       .send(createUserInputMock);
@@ -86,7 +86,7 @@ describe("Update Password Controller (e2e) - (PATCH /users/:id/password)", () =>
         currentPassword: createUserInputMock.password,
         newPassword: "new-password",
       })
-      .expect(401);
+      .expect(403);
 
     expect(response.body.message).toBe("Você não pode atualizar esse usuário!");
   });

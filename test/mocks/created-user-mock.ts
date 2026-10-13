@@ -5,6 +5,8 @@ export const createdUserMock: User = {
   name: "John Doe",
   email: "johndoe@email.com",
   password: "$2y$12$ZAj8z3oAahvU7aQNKNqrh.Sf0jIKAr922ZhmHLr34r7UbBsaybkbK",
-  plan: "free",
+  plan: "FREE",
   created_at: new Date(),
+  trialStartedAt: new Date(),
+  trialEndsAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
 };

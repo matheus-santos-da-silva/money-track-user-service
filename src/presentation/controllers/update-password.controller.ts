@@ -8,7 +8,7 @@ import {
   Param,
   Patch,
   Req,
-  UnauthorizedException,
+  ForbiddenException,
   UseGuards,
 } from "@nestjs/common";
 
@@ -28,7 +28,7 @@ export class UpdatePasswordController {
       const user = req["user"] as { id: string };
 
       if (user.id !== id) {
-        throw new UnauthorizedException(
+        throw new ForbiddenException(
           "Você não pode atualizar esse usuário!"
         );
       }

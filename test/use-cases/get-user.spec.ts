@@ -37,6 +37,25 @@ describe("Get User UseCase", () => {
     expect(result).resolves.toMatchObject({ name: createdUserMock.name });
   });
 
+  it("should return isPremium and isTrialActive calculated by the server", async () => {
+    const day = 86_400_000;
+    const cases: Array<[string, any, Date, boolean, boolean]> = [
+      ["FREE with an active trial", "FREE", new Date(Date.now() + day), true, true],
+      ["FREE with an expired trial", "FREE", new Date(Date.now() - day), false, false],
+      ["PREMIUM with an expired trial", "PREMIUM", new Date(Date.now() - day), true, false],
+    ];
+
+    for (const [, plan, trialEndsAt, isPremium, isTrialActive] of cases) {
+      const user = { ...createdUserMock, id: `user-${plan}-${+trialEndsAt}`, plan, trialEndsAt };
+      await usersRepository.create(user);
+
+      await expect(useCase.findUser(user.id)).resolves.toMatchObject({
+        isPremium,
+        isTrialActive,
+      });
+    }
+  });
+
   it("should throw an exception when user id not exists ", () => {
     usersRepository.create(createdUserMock);
     const result = useCase.findUser("invalid-id");
