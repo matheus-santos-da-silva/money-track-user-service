@@ -11,6 +11,7 @@ import {
   GetUserUseCase,
   UpdateUserUseCase,
   UpdatePasswordUseCase,
+  DeleteUserUseCase,
   ValidatePurchaseUseCase,
   HandleGooglePlayWebhookUseCase,
 } from "./";
@@ -20,6 +21,7 @@ import {
   GetUserProtocol,
   UpdateUserProtocol,
   UpdatePasswordProtocol,
+  DeleteUserProtocol,
   ValidatePurchaseProtocol,
   HandleGooglePlayWebhookProtocol,
 } from "src/domain/use-cases-protocol/";
@@ -37,6 +39,9 @@ import {
           client: {
             brokers: [process.env.KAFKA_URL],
           },
+          // Este serviço só publica eventos; sem isso o ClientKafka também sobe um
+          // consumer (para respostas request-reply) que nunca é usado.
+          producerOnlyMode: true,
         },
       },
     ]),
@@ -64,6 +69,10 @@ import {
       useClass: UpdatePasswordUseCase,
     },
     {
+      provide: DeleteUserProtocol,
+      useClass: DeleteUserUseCase,
+    },
+    {
       provide: ValidatePurchaseProtocol,
       useClass: ValidatePurchaseUseCase,
     },
@@ -85,6 +94,7 @@ import {
     GetUserProtocol,
     UpdateUserProtocol,
     UpdatePasswordProtocol,
+    DeleteUserProtocol,
     ValidatePurchaseProtocol,
     HandleGooglePlayWebhookProtocol,
   ],

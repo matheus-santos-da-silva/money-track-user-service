@@ -6,7 +6,7 @@ import { UsersRepositoryProtocol } from "src/infra/database/repositories/protoco
 import {
   BadRequestException,
   Injectable,
-  UnauthorizedException,
+  ForbiddenException,
 } from "@nestjs/common";
 
 @Injectable()
@@ -26,7 +26,7 @@ export class UpdatePasswordUseCase implements UpdatePasswordProtocol {
       );
 
       if (!validPassword) {
-        throw new UnauthorizedException("Não foi possível atualizar a senha");
+        throw new ForbiddenException("Não foi possível atualizar a senha");
       }
 
       const encryptNewPass = await encryptPass(data.newPassword);

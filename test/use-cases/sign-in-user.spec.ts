@@ -5,7 +5,10 @@ import { UsersRepositoryProtocol } from "../../src/infra/database/repositories/p
 import { signInInputMock, createdUserMock } from "../mocks/";
 import * as bcrypt from "bcryptjs";
 
-jest.spyOn(bcrypt, "compare");
+jest.mock("bcryptjs", () => ({
+  ...jest.requireActual("bcryptjs"),
+  compare: jest.fn(),
+}));
 
 describe("SignIn User UseCase", () => {
   let useCase: SignInUserUseCase;
@@ -40,15 +43,25 @@ describe("SignIn User UseCase", () => {
     expect(result).resolves.toHaveProperty("token");
   });
 
-  it("should throw an exception when the user does not exist", () => {
-    const result = useCase.signIn(signInInputMock);
-    expect(result).rejects.toThrow("Email não cadastrado. Crie uma conta!");
+  it("should throw the same generic error when the user does not exist", async () => {
+    await expect(useCase.signIn(signInInputMock)).rejects.toThrow(
+      "E-mail ou senha incorretos."
+    );
+  });
+
+  it("should still compare the password when the user does not exist (same response time)", async () => {
+    (bcrypt.compare as jest.Mock).mockClear();
+
+    await expect(useCase.signIn(signInInputMock)).rejects.toThrow();
+
+    expect(bcrypt.compare).toHaveBeenCalledTimes(1);
   });
 
   it("should throw an exception when the password is wrong", async () => {
     await usersRepository.create(createdUserMock);
     (bcrypt.compare as jest.Mock).mockResolvedValue(false);
-    const result = useCase.signIn(signInInputMock);
-    expect(result).rejects.toThrow("Senha incorreta. Tente novamente!");
+    await expect(useCase.signIn(signInInputMock)).rejects.toThrow(
+      "E-mail ou senha incorretos."
+    );
   });
 });

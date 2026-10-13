@@ -1,4 +1,4 @@
-import * as request from "supertest";
+import request from "supertest";
 import { Test } from "@nestjs/testing";
 import { AppModule } from "../src/app.module";
 import { PrismaService } from "src/infra/database/config/prisma.service";
@@ -42,11 +42,11 @@ describe("Sign User Controller (e2e) - (POST /users/signIn)", () => {
       .expect(200);
   });
 
-  it("should return 400 status code when the user does not exist", async () => {
+  it("should return 401 status code when the user does not exist (same answer as a wrong password)", async () => {
     await request(app.getHttpServer())
       .post("/users/signIn")
       .send(signInInputMock)
-      .expect(400);
+      .expect(401);
   });
 
   it("should return 401 status code when the password is wrong", async () => {

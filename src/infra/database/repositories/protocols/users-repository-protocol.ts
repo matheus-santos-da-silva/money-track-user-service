@@ -10,7 +10,12 @@ export abstract class UsersRepositoryProtocol {
   abstract findByEmail(email: string): Promise<findByEmailResponseDTO>;
   abstract findById(id: string): Promise<FindUserResponseDTO>;
   abstract findPasswordById(id: string): Promise<{ password: string }>;
-  abstract update(id: string, data: UpdateUserDTO): Promise<void>;
+  // password só é gravado internamente (troca de senha), nunca vem do DTO do endpoint.
+  abstract update(
+    id: string,
+    data: UpdateUserDTO & { password?: string },
+  ): Promise<void>;
+  abstract delete(id: string): Promise<void>;
   abstract findByPurchaseToken(token: string): Promise<{ id: string } | null>;
   abstract updateSubscription(id: string, data: UpdateSubscriptionDTO): Promise<void>;
 }

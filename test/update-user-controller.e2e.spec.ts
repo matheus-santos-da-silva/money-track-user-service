@@ -1,4 +1,4 @@
-import * as request from "supertest";
+import request from "supertest";
 import { Test } from "@nestjs/testing";
 import { AppModule } from "../src/app.module";
 import { PrismaService } from "src/infra/database/config/prisma.service";
@@ -50,7 +50,7 @@ describe("Update User Controller (e2e) - (PATCH /users/:id)", () => {
       .expect(200);
   });
 
-  it("should return a status code 401 when token id is different of path id", async () => {
+  it("should return a status code 403 when token id is different of path id", async () => {
     const { body } = await request(app.getHttpServer())
       .post(`/users`)
       .send(createUserInputMock);
@@ -59,6 +59,6 @@ describe("Update User Controller (e2e) - (PATCH /users/:id)", () => {
       .patch(`/users/different-id`)
       .set("Authorization", `Bearer ${body.token}`)
       .send({ name: "updated-name" })
-      .expect(401);
+      .expect(403);
   });
 });

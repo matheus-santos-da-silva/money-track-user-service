@@ -24,10 +24,4 @@ export class UpdateUserDTO {
     message: "O nome contém caracteres inválidos!",
   })
   name?: string;
-
-  @IsOptional()
-  @IsString({ message: "A senha deve ser uma string" })
-  @MinLength(6, { message: "A senha deve ter pelo menos 6 caracteres!" })
-  @MaxLength(50, { message: "A senha deve ter no máximo 50 caracteres!" })
-  password?: string;
 }

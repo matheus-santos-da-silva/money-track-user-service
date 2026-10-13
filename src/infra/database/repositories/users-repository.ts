@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { User } from "src/domain/entities/user";
 import { UpdateUserDTO } from "src/domain/DTO/update-user-DTO";
 import { PrismaService } from "../config/prisma.service";
@@ -8,9 +9,13 @@ import { findByEmailResponseDTO } from "src/domain/DTO/find-by-email-response-DT
 import { UsersRepositoryProtocol } from "./protocols/users-repository-protocol";
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
+
+const isUniqueViolation = (error: unknown) =>
+  error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";
 
 @Injectable()
 export class UsersRepository implements UsersRepositoryProtocol {
@@ -31,14 +36,25 @@ export class UsersRepository implements UsersRepositoryProtocol {
     }
   }
 
-  async update(id: string, data: UpdateUserDTO) {
+  async update(id: string, data: UpdateUserDTO & { password?: string }) {
     try {
       await this.prisma.user.update({
         where: { id },
         data,
       });
     } catch (error) {
+      if (isUniqueViolation(error)) {
+        throw new ConflictException("E-mail já está em uso.");
+      }
       throw new BadRequestException("Erro ao atualizar o usuário!");
+    }
+  }
+
+  async delete(id: string): Promise<void> {
+    try {
+      await this.prisma.user.delete({ where: { id } });
+    } catch (error) {
+      throw new BadRequestException("Erro ao excluir o usuário!");
     }
   }
 
@@ -127,6 +143,9 @@ export class UsersRepository implements UsersRepositoryProtocol {
 
       return user;
     } catch (error) {
+      if (isUniqueViolation(error)) {
+        throw new ConflictException("Usuário já cadastrado. Acesse sua conta!");
+      }
       throw new BadRequestException(
         "Erro ao criar o usuário, tente novamente!",
       );

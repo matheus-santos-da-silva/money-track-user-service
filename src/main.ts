@@ -1,11 +1,14 @@
 import "dotenv/config";
 import { AppModule } from "./app.module";
 import { NestFactory } from "@nestjs/core";
+import { NestExpressApplication } from "@nestjs/platform-express";
 import { ValidationPipe } from "@nestjs/common";
-import { MicroserviceOptions, Transport } from "@nestjs/microservices";
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  // Atrás do Caddy, req.ip precisa ser o IP real do cliente (X-Forwarded-For);
+  // senão o rate limit (Throttler) conta todos os usuários como um só.
+  app.set("trust proxy", Number(process.env.TRUST_PROXY_HOPS ?? 1));
   app.enableCors();
   app.useGlobalPipes(
     new ValidationPipe({
@@ -15,16 +18,8 @@ async function bootstrap() {
     }),
   );
 
-  app.connectMicroservice<MicroserviceOptions>({
-    transport: Transport.KAFKA,
-    options: {
-      client: {
-        brokers: [process.env.KAFKA_URL],
-      },
-    },
-  });
-
-  await app.startAllMicroservices();
+  // Só produz eventos no Kafka (via ClientKafka em UsersUseCasesModule); não há
+  // consumers, então nenhum servidor de microservice é conectado aqui.
   await app.listen(process.env.PORT ?? 3000);
 }
 

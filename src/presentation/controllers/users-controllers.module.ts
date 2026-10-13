@@ -7,6 +7,7 @@ import {
   SignInUserController,
   UpdateUserController,
   UpdatePasswordController,
+  DeleteUserController,
   ValidatePurchaseController,
   GooglePlayWebhookController,
 } from ".";
@@ -19,6 +20,7 @@ import {
     GetUserController,
     UpdateUserController,
     UpdatePasswordController,
+    DeleteUserController,
     ValidatePurchaseController,
     GooglePlayWebhookController,
   ],
