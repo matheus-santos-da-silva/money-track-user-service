@@ -7,10 +7,13 @@ import {
   BadRequestException,
   Injectable,
   ForbiddenException,
+  Logger,
 } from "@nestjs/common";
 
 @Injectable()
 export class DeleteUserUseCase implements DeleteUserProtocol {
+  private readonly logger = new Logger(DeleteUserUseCase.name);
+
   constructor(
     private readonly repository: UsersRepositoryProtocol,
     private readonly kafkaProducer: KafkaProducerService,
@@ -26,6 +29,7 @@ export class DeleteUserUseCase implements DeleteUserProtocol {
     }
 
     await this.repository.delete(id);
+    this.logger.log({ userId: id }, "Conta excluída");
 
     try {
       await this.kafkaProducer.send({
@@ -36,9 +40,9 @@ export class DeleteUserUseCase implements DeleteUserProtocol {
     } catch (error) {
       // A conta já foi removida aqui; sem o evento, o finance-service mantém
       // dados órfãos desse usuário. Registrado para reprocessamento manual.
-      console.error(
-        `Falha ao publicar user-deleted (userId=${id}). Remover os dados no finance-service manualmente.`,
-        error,
+      this.logger.error(
+        { userId: id, err: error },
+        "Falha ao publicar user-deleted: remover os dados no finance-service manualmente",
       );
     }
   }

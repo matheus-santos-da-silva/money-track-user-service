@@ -10,6 +10,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
 } from "@nestjs/common";
 
 interface UserCreatedPayload {
@@ -20,6 +21,8 @@ interface UserCreatedPayload {
 
 @Injectable()
 export class CreateUserUseCase implements CreateUserProtocol {
+  private readonly logger = new Logger(CreateUserUseCase.name);
+
   constructor(
     private readonly service: CreateUserServiceProtocol,
     private readonly repository: UsersRepositoryProtocol,
@@ -49,6 +52,8 @@ export class CreateUserUseCase implements CreateUserProtocol {
           "Erro na criação do usuário, tente novamente mais tarde!",
         );
       }
+      this.logger.log({ userId: createdUser.id }, "Usuário criado");
+
       const token = await createUserToken({ id: createdUser.id });
       await this.kafkaProducer.send<UserCreatedPayload>({
         topic: "user-created",
