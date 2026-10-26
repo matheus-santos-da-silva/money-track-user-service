@@ -6,6 +6,7 @@ import {
 } from "@nestjs/common";
 import { JwtPayload, verify } from "jsonwebtoken";
 import { GetUserProtocol } from "src/domain/use-cases-protocol/";
+import { setUserId } from "src/shared/observability/request-context";
 
 interface TokenPayload extends JwtPayload {
   id: string;
@@ -29,6 +30,7 @@ export class GetUserController {
         throw new UnauthorizedException("Token inválido ou expirado");
       }
 
+      setUserId(validToken.id);
       const user = await this.getUserUseCase.findUser(validToken.id);
       return user;
     } catch (error) {

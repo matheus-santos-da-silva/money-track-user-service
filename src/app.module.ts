@@ -3,9 +3,12 @@ import { APP_GUARD } from "@nestjs/core";
 import { AuthModule } from "./application/auth/auth.module";
 import { UsersControllersModule } from "./presentation/controllers/users-controllers.module";
 import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
+import { LoggerModule } from "nestjs-pino";
+import { loggerOptions } from "./shared/observability/logger-options";
 
 @Module({
   imports: [
+    LoggerModule.forRoot(loggerOptions("users-service")),
     UsersControllersModule,
     AuthModule,
     ThrottlerModule.forRoot([

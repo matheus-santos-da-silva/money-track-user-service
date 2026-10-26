@@ -4,10 +4,12 @@ import { ValidatePurchaseDTO } from "src/domain/DTO/validate-purchase-DTO";
 import { KafkaProducerService } from "src/infra/kafka/producers/kafka-producer.service";
 import { UsersRepositoryProtocol } from "src/infra/database/repositories/protocols/users-repository-protocol";
 import { ValidatePurchaseProtocol } from "src/domain/use-cases-protocol/validate-purchase";
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable, Logger } from "@nestjs/common";
 
 @Injectable()
 export class ValidatePurchaseUseCase implements ValidatePurchaseProtocol {
+  private readonly logger = new Logger(ValidatePurchaseUseCase.name);
+
   constructor(
     private readonly repository: UsersRepositoryProtocol,
     private readonly googlePlayService: GooglePlayService,
@@ -22,6 +24,7 @@ export class ValidatePurchaseUseCase implements ValidatePurchaseProtocol {
       await this.googlePlayService.verifySubscription(purchaseToken, productId);
 
     if (!valid) {
+      this.logger.warn({ userId, productId }, "Compra recusada pela Google Play");
       throw new BadRequestException("Compra inválida ou não encontrada");
     }
 
@@ -30,6 +33,7 @@ export class ValidatePurchaseUseCase implements ValidatePurchaseProtocol {
       subscriptionPurchaseToken: purchaseToken,
       subscriptionExpiresAt: expiresAt,
     });
+    this.logger.log({ userId, productId, expiresAt }, "Compra validada: plano Premium");
 
     await this.kafkaProducer.send({
       topic: "user-plan-updated",

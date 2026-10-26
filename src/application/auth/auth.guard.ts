@@ -1,5 +1,6 @@
 import { Request } from "express";
 import { JwtService } from "@nestjs/jwt";
+import { setUserId } from "src/shared/observability/request-context";
 import {
   CanActivate,
   ExecutionContext,
@@ -22,6 +23,7 @@ export class AuthGuard implements CanActivate {
         secret: process.env.JWT_SECRET,
       });
       request["user"] = payload;
+      setUserId(payload.id);
       return true;
     } catch (error) {
       throw new UnauthorizedException("Token inválido");

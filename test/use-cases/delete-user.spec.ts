@@ -1,5 +1,6 @@
 import { encryptPass } from "src/shared/utils/encrypt-password";
 import { createdUserMock } from "../mocks/";
+import { Logger } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
 import { DeleteUserUseCase } from "../../src/application/use-cases";
 import { KafkaProducerService } from "src/infra/kafka/producers/kafka-producer.service";
@@ -65,8 +66,8 @@ describe("Delete User UseCase", () => {
     ).rejects.toThrow("Usuário não existe!");
   });
 
-  it("should still succeed when publishing the event fails", async () => {
-    jest.spyOn(console, "error").mockImplementation(() => undefined);
+  it("should still succeed and log an error when publishing the event fails", async () => {
+    const logError = jest.spyOn(Logger.prototype, "error");
     kafkaSend.mockRejectedValueOnce(new Error("kafka down"));
 
     await expect(
@@ -74,5 +75,9 @@ describe("Delete User UseCase", () => {
     ).resolves.toBeUndefined();
 
     expect(await usersRepository.findById(createdUserMock.id)).toBeUndefined();
+    expect(logError).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: createdUserMock.id }),
+      expect.stringContaining("user-deleted"),
+    );
   });
 });
