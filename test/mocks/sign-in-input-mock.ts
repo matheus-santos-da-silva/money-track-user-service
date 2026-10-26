@@ -1,4 +1,4 @@
 export const signInInputMock = {
   email: "johndoe@email.com",
-  password: "test",
+  password: "test-password",
 };
