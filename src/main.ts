@@ -13,6 +13,7 @@ async function bootstrap() {
   app.useLogger(app.get(Logger));
   // Primeiro middleware: dá um id a cada requisição antes de qualquer log.
   app.use(requestContextMiddleware);
+  app.enableShutdownHooks();
   // Atrás do Caddy, req.ip precisa ser o IP real do cliente (X-Forwarded-For);
   // senão o rate limit (Throttler) conta todos os usuários como um só.
   app.set("trust proxy", Number(process.env.TRUST_PROXY_HOPS ?? 1));

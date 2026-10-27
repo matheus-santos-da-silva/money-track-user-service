@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { APP_GUARD } from "@nestjs/core";
 import { AuthModule } from "./application/auth/auth.module";
 import { UsersControllersModule } from "./presentation/controllers/users-controllers.module";
+import { HealthControllersModule } from "./presentation/controllers/health/health-controllers.module";
 import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
 import { LoggerModule } from "nestjs-pino";
 import { loggerOptions } from "./shared/observability/logger-options";
@@ -10,6 +11,7 @@ import { loggerOptions } from "./shared/observability/logger-options";
   imports: [
     LoggerModule.forRoot(loggerOptions("users-service")),
     UsersControllersModule,
+    HealthControllersModule,
     AuthModule,
     ThrottlerModule.forRoot([
       {
