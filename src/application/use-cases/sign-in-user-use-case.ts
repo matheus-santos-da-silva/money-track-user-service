@@ -1,6 +1,7 @@
 import { compare } from "bcryptjs";
 import { SignInUserDTO } from "src/domain/DTO/user-signIn-DTO";
 import { createUserToken } from "src/shared/utils/create-user-token";
+import { signInsTotal } from "src/shared/observability/business-metrics";
 import { SignInUserProtocol } from "src/domain/use-cases-protocol/sign-in-user";
 import { UsersRepositoryProtocol } from "src/infra/database/repositories/protocols/users-repository-protocol";
 import { AuthenticateUserResponseDTO } from "src/domain/DTO/authenticate-user-response-DTO";
@@ -32,9 +33,11 @@ export class SignInUserUseCase implements SignInUserProtocol {
 
       // Mesma resposta para e-mail inexistente e senha errada.
       if (!user || !checkPassword) {
+        signInsTotal.inc({ result: "invalid_credentials" });
         throw new UnauthorizedException(INVALID_CREDENTIALS);
       }
 
+      signInsTotal.inc({ result: "success" });
       const token = await createUserToken({ id: user.id });
       return { token };
     } catch (error) {

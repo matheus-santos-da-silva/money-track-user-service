@@ -1,6 +1,7 @@
 import { Plan } from "@prisma/client";
 import { CreateUserDTO } from "src/domain/DTO/create-user-DTO";
 import { createUserToken } from "src/shared/utils/create-user-token";
+import { signUpsTotal } from "src/shared/observability/business-metrics";
 import { CreateUserProtocol } from "src/domain/use-cases-protocol/create-user";
 import { KafkaProducerService } from "src/infra/kafka/producers/kafka-producer.service";
 import { UsersRepositoryProtocol } from "src/infra/database/repositories/protocols/users-repository-protocol";
@@ -53,6 +54,7 @@ export class CreateUserUseCase implements CreateUserProtocol {
         );
       }
       this.logger.log({ userId: createdUser.id }, "Usuário criado");
+      signUpsTotal.inc();
 
       const token = await createUserToken({ id: createdUser.id });
       await this.kafkaProducer.send<UserCreatedPayload>({
