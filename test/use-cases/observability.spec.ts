@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { Producer } from "@nestjs/microservices/external/kafka.interface";
 import { kafkaProducerMock } from "../mocks/kafka-mock";
+import { kafkaEventsPublishedTotal } from "src/shared/observability/business-metrics";
 import {
   CORRELATION_ID_HEADER,
   KafkaProducerService,
@@ -76,5 +77,24 @@ describe("KafkaProducerService", () => {
     await service.send({ topic: "user-deleted", key: "user-deleted", value: { id: "1" } });
 
     expect(lastMessage().headers[CORRELATION_ID_HEADER]).toMatch(/^[0-9a-f-]{36}$/);
+  });
+
+  it("should count published events by topic and result", async () => {
+    kafkaEventsPublishedTotal.reset();
+    const service = new KafkaProducerService(kafkaProducerMock as Producer);
+    const send = () =>
+      service.send({ topic: "user-created", key: "user-created", value: { id: "1" } });
+
+    await send();
+    (kafkaProducerMock.send as jest.Mock).mockRejectedValueOnce(new Error("broker fora do ar"));
+    await expect(send()).rejects.toThrow("broker fora do ar");
+
+    const { values } = await kafkaEventsPublishedTotal.get();
+    expect(values.map(({ labels, value }) => ({ ...labels, value }))).toEqual(
+      expect.arrayContaining([
+        { topic: "user-created", result: "success", value: 1 },
+        { topic: "user-created", result: "error", value: 1 },
+      ]),
+    );
   });
 });

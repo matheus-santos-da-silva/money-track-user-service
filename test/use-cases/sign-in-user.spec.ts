@@ -4,6 +4,7 @@ import { InMemoryUserRepository } from "../in-memory-repositories/in-memory-user
 import { UsersRepositoryProtocol } from "../../src/infra/database/repositories/protocols/users-repository-protocol";
 import { signInInputMock, createdUserMock } from "../mocks/";
 import * as bcrypt from "bcryptjs";
+import { signInsTotal } from "src/shared/observability/business-metrics";
 
 jest.mock("bcryptjs", () => ({
   ...jest.requireActual("bcryptjs"),
@@ -63,5 +64,21 @@ describe("SignIn User UseCase", () => {
     await expect(useCase.signIn(signInInputMock)).rejects.toThrow(
       "E-mail ou senha incorretos."
     );
+  });
+
+  it("should count sign-ins by result", async () => {
+    const count = async (result: string) =>
+      (await signInsTotal.get()).values.find((v) => v.labels.result === result)
+        ?.value;
+    signInsTotal.reset();
+    await usersRepository.create(createdUserMock);
+
+    (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+    await useCase.signIn(signInInputMock).catch(() => undefined);
+    (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+    await useCase.signIn(signInInputMock);
+
+    expect(await count("invalid_credentials")).toBe(1);
+    expect(await count("success")).toBe(1);
   });
 });
