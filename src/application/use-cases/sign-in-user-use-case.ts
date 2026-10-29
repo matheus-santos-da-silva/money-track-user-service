@@ -1,4 +1,5 @@
 import { compare } from "bcryptjs";
+import { trace } from "@opentelemetry/api";
 import { SignInUserDTO } from "src/domain/DTO/user-signIn-DTO";
 import { createUserToken } from "src/shared/utils/create-user-token";
 import { signInsTotal } from "src/shared/observability/business-metrics";
@@ -15,6 +16,8 @@ const DUMMY_HASH =
 
 const INVALID_CREDENTIALS = "E-mail ou senha incorretos.";
 
+const tracer = trace.getTracer("users-service");
+
 @Injectable()
 export class SignInUserUseCase implements SignInUserProtocol {
   constructor(private readonly repository: UsersRepositoryProtocol) {}
@@ -26,9 +29,15 @@ export class SignInUserUseCase implements SignInUserProtocol {
     try {
       const user = await this.repository.findByEmail(email);
 
-      const checkPassword = await compare(
-        password,
-        user ? user.password : DUMMY_HASH,
+      const checkPassword = await tracer.startActiveSpan(
+        "password.compare",
+        async (span) => {
+          try {
+            return await compare(password, user ? user.password : DUMMY_HASH);
+          } finally {
+            span.end();
+          }
+        },
       );
 
       // Mesma resposta para e-mail inexistente e senha errada.

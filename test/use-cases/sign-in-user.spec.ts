@@ -5,6 +5,9 @@ import { UsersRepositoryProtocol } from "../../src/infra/database/repositories/p
 import { signInInputMock, createdUserMock } from "../mocks/";
 import * as bcrypt from "bcryptjs";
 import { signInsTotal } from "src/shared/observability/business-metrics";
+import { setupInMemoryTracing } from "../helpers/in-memory-tracing";
+
+const { exporter } = setupInMemoryTracing();
 
 jest.mock("bcryptjs", () => ({
   ...jest.requireActual("bcryptjs"),
@@ -63,6 +66,17 @@ describe("SignIn User UseCase", () => {
     (bcrypt.compare as jest.Mock).mockResolvedValue(false);
     await expect(useCase.signIn(signInInputMock)).rejects.toThrow(
       "E-mail ou senha incorretos."
+    );
+  });
+
+  it("should time the password check in its own span", async () => {
+    exporter.reset();
+    (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+
+    await useCase.signIn(signInInputMock).catch(() => undefined);
+
+    expect(exporter.getFinishedSpans().map((span) => span.name)).toContain(
+      "password.compare"
     );
   });
 
