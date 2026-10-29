@@ -1,11 +1,6 @@
-import { randomUUID } from "node:crypto";
 import { Producer } from "@nestjs/microservices/external/kafka.interface";
 import { Inject, Injectable, Logger, OnModuleInit } from "@nestjs/common";
-import { getRequestContext } from "src/shared/observability/request-context";
 import { kafkaEventsPublishedTotal } from "src/shared/observability/business-metrics";
-
-// Header que leva o id da requisição de origem até quem consome o evento
-export const CORRELATION_ID_HEADER = "x-correlation-id";
 
 export interface KafkaSendProps<T = any> {
   topic: string;
@@ -13,6 +8,7 @@ export interface KafkaSendProps<T = any> {
   value: T;
 }
 
+// O header traceparent, que leva o trace até o consumer, é injetado pela instrumentação do kafkajs.
 @Injectable()
 export class KafkaProducerService implements OnModuleInit {
   private readonly logger = new Logger(KafkaProducerService.name);
@@ -28,18 +24,10 @@ export class KafkaProducerService implements OnModuleInit {
   }
 
   async send<T = any>({ topic, key, value }: KafkaSendProps<T>) {
-    const correlationId = getRequestContext()?.requestId ?? randomUUID();
-
     try {
       await this.kafkaProducer.send({
         topic: topic,
-        messages: [
-          {
-            key,
-            value: JSON.stringify({ ...value }),
-            headers: { [CORRELATION_ID_HEADER]: correlationId },
-          },
-        ],
+        messages: [{ key, value: JSON.stringify({ ...value }) }],
       });
     } catch (error) {
       kafkaEventsPublishedTotal.inc({ topic, result: "error" });
@@ -47,6 +35,6 @@ export class KafkaProducerService implements OnModuleInit {
     }
 
     kafkaEventsPublishedTotal.inc({ topic, result: "success" });
-    this.logger.debug({ topic, correlationId }, "Evento publicado");
+    this.logger.debug({ topic }, "Evento publicado");
   }
 }
