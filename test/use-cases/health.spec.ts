@@ -1,5 +1,5 @@
 import { Admin } from "kafkajs";
-import { HealthCheckError, HealthCheckService } from "@nestjs/terminus";
+import { HealthCheckService, HealthIndicatorService } from "@nestjs/terminus";
 import { KafkaHealthIndicator } from "src/infra/health/kafka.health";
 import { HealthController } from "src/presentation/controllers/health/health.controller";
 
@@ -14,7 +14,7 @@ class TestKafkaHealthIndicator extends KafkaHealthIndicator {
   created: ReturnType<typeof fakeAdmin>[] = [];
 
   constructor(private readonly describeCluster: jest.Mock) {
-    super();
+    super(new HealthIndicatorService());
   }
 
   protected createAdmin() {
@@ -43,10 +43,7 @@ describe("KafkaHealthIndicator", () => {
       jest.fn().mockRejectedValue(new Error("broker fora do ar")),
     );
 
-    const error = await indicator.isHealthy("kafka").catch((e) => e);
-
-    expect(error).toBeInstanceOf(HealthCheckError);
-    expect(error.causes).toEqual({
+    await expect(indicator.isHealthy("kafka")).resolves.toEqual({
       kafka: { status: "down", message: "broker fora do ar" },
     });
   });
@@ -56,11 +53,8 @@ describe("KafkaHealthIndicator", () => {
       jest.fn().mockReturnValue(new Promise(() => undefined)),
     );
 
-    const error = await indicator.isHealthy("kafka", 20).catch((e) => e);
-
-    expect(error.causes.kafka).toEqual({
-      status: "down",
-      message: "sem resposta em 20 ms",
+    await expect(indicator.isHealthy("kafka", 20)).resolves.toEqual({
+      kafka: { status: "down", message: "sem resposta em 20 ms" },
     });
   });
 
@@ -71,7 +65,7 @@ describe("KafkaHealthIndicator", () => {
       .mockResolvedValue({ brokers: [{}] });
     const indicator = new TestKafkaHealthIndicator(describeCluster);
 
-    await indicator.isHealthy("kafka").catch(() => undefined);
+    await indicator.isHealthy("kafka");
     await expect(indicator.isHealthy("kafka")).resolves.toEqual({
       kafka: { status: "up", brokers: 1 },
     });

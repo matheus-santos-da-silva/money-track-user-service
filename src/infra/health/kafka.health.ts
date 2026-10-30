@@ -1,10 +1,6 @@
 import { Admin, Kafka, logLevel } from "kafkajs";
 import { Injectable, OnModuleDestroy } from "@nestjs/common";
-import {
-  HealthCheckError,
-  HealthIndicator,
-  HealthIndicatorResult,
-} from "@nestjs/terminus";
+import { HealthIndicatorResult, HealthIndicatorService } from "@nestjs/terminus";
 
 const DEFAULT_TIMEOUT_MS = 1500;
 
@@ -28,27 +24,28 @@ const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> =>
 
 // A conexão é reaproveitada entre as checagens e descartada quando uma falha.
 @Injectable()
-export class KafkaHealthIndicator extends HealthIndicator implements OnModuleDestroy {
+export class KafkaHealthIndicator implements OnModuleDestroy {
   private admin?: Admin;
   private connecting?: Promise<Admin>;
+
+  constructor(private readonly healthIndicatorService: HealthIndicatorService) {}
 
   async isHealthy(
     key: string,
     timeoutMs = DEFAULT_TIMEOUT_MS,
   ): Promise<HealthIndicatorResult> {
+    const indicator = this.healthIndicatorService.check(key);
+
     try {
       const { brokers } = await withTimeout(
         this.getAdmin().then((admin) => admin.describeCluster()),
         timeoutMs,
       );
-      return this.getStatus(key, true, { brokers: brokers.length });
+      return indicator.up({ brokers: brokers.length });
     } catch (error) {
       await this.reset();
       const message = error instanceof Error ? error.message : String(error);
-      throw new HealthCheckError(
-        "Kafka indisponível",
-        this.getStatus(key, false, { message }),
-      );
+      return indicator.down({ message });
     }
   }
 
