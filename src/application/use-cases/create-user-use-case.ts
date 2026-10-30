@@ -54,7 +54,7 @@ export class CreateUserUseCase implements CreateUserProtocol {
         );
       }
       this.logger.log({ userId: createdUser.id }, "Usuário criado");
-      signUpsTotal.inc();
+      signUpsTotal.add(1);
 
       const token = await createUserToken({ id: createdUser.id });
       await this.kafkaProducer.send<UserCreatedPayload>({

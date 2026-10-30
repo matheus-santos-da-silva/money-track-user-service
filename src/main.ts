@@ -1,4 +1,4 @@
-// Primeiro import: o tracing precisa instrumentar http, express, pg e kafkajs antes de eles serem carregados.
+// Primeiro import: a telemetria precisa instrumentar http, express, pg e kafkajs antes de eles serem carregados.
 import "./instrument";
 import { AppModule } from "./app.module";
 import { NestFactory } from "@nestjs/core";
@@ -6,17 +6,14 @@ import { NestExpressApplication } from "@nestjs/platform-express";
 import { ValidationPipe } from "@nestjs/common";
 import { Logger } from "nestjs-pino";
 import { requestContextMiddleware } from "./shared/observability/request-context";
-import { configureMetrics, metricsMiddleware } from "./shared/observability/metrics";
 
 async function bootstrap() {
-  configureMetrics("users-service");
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bufferLogs: true,
   });
   app.useLogger(app.get(Logger));
   // Primeiro middleware: devolve o trace_id no x-request-id e abre o contexto do usuário para os logs.
   app.use(requestContextMiddleware);
-  app.use(metricsMiddleware);
   app.enableShutdownHooks();
   // Atrás do Caddy, req.ip precisa ser o IP real do cliente (X-Forwarded-For);
   // senão o rate limit (Throttler) conta todos os usuários como um só.

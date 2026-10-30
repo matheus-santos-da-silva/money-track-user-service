@@ -5,6 +5,7 @@ import { InMemoryUserRepository } from "../in-memory-repositories/in-memory-user
 import { UsersRepositoryProtocol } from "../../src/infra/database/repositories/protocols/users-repository-protocol";
 import { CreateUserServiceProtocol } from "../../src/domain/services/protocols";
 import { createUserInputMock, createdUserMock } from "../mocks/";
+import { counterValue } from "../helpers/in-memory-metrics";
 
 describe("Create User UseCase", () => {
   let useCase: CreateUserUseCase;
@@ -52,6 +53,16 @@ describe("Create User UseCase", () => {
   it("should create a new User and return a token", () => {
     const result = useCase.create(createUserInputMock);
     expect(result).resolves.toHaveProperty("token");
+  });
+
+  it("should count the sign-up", async () => {
+    const signUps = async () =>
+      (await counterValue("money_track.users.signups")) ?? 0;
+    const before = await signUps();
+
+    await useCase.create(createUserInputMock);
+
+    expect(await signUps()).toBe(before + 1);
   });
 
   it("should throw an exception when the same email already exists", async () => {

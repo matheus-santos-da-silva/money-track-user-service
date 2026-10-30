@@ -1,6 +1,5 @@
 import { Producer } from "@nestjs/microservices/external/kafka.interface";
 import { Inject, Injectable, Logger, OnModuleInit } from "@nestjs/common";
-import { kafkaEventsPublishedTotal } from "src/shared/observability/business-metrics";
 
 export interface KafkaSendProps<T = any> {
   topic: string;
@@ -8,7 +7,8 @@ export interface KafkaSendProps<T = any> {
   value: T;
 }
 
-// O header traceparent, que leva o trace até o consumer, é injetado pela instrumentação do kafkajs.
+// A instrumentação do kafkajs injeta o header traceparent (leva o trace até o consumer)
+// e mede os envios e as falhas (messaging.client.sent.messages).
 @Injectable()
 export class KafkaProducerService implements OnModuleInit {
   private readonly logger = new Logger(KafkaProducerService.name);
@@ -24,17 +24,11 @@ export class KafkaProducerService implements OnModuleInit {
   }
 
   async send<T = any>({ topic, key, value }: KafkaSendProps<T>) {
-    try {
-      await this.kafkaProducer.send({
-        topic: topic,
-        messages: [{ key, value: JSON.stringify({ ...value }) }],
-      });
-    } catch (error) {
-      kafkaEventsPublishedTotal.inc({ topic, result: "error" });
-      throw error;
-    }
+    await this.kafkaProducer.send({
+      topic: topic,
+      messages: [{ key, value: JSON.stringify({ ...value }) }],
+    });
 
-    kafkaEventsPublishedTotal.inc({ topic, result: "success" });
     this.logger.debug({ topic }, "Evento publicado");
   }
 }
