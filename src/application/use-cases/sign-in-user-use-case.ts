@@ -42,11 +42,11 @@ export class SignInUserUseCase implements SignInUserProtocol {
 
       // Mesma resposta para e-mail inexistente e senha errada.
       if (!user || !checkPassword) {
-        signInsTotal.inc({ result: "invalid_credentials" });
+        signInsTotal.add(1, { result: "invalid_credentials" });
         throw new UnauthorizedException(INVALID_CREDENTIALS);
       }
 
-      signInsTotal.inc({ result: "success" });
+      signInsTotal.add(1, { result: "success" });
       const token = await createUserToken({ id: user.id });
       return { token };
     } catch (error) {

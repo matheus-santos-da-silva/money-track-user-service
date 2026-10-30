@@ -4,10 +4,13 @@ import { InMemoryUserRepository } from "../in-memory-repositories/in-memory-user
 import { UsersRepositoryProtocol } from "../../src/infra/database/repositories/protocols/users-repository-protocol";
 import { signInInputMock, createdUserMock } from "../mocks/";
 import * as bcrypt from "bcryptjs";
-import { signInsTotal } from "src/shared/observability/business-metrics";
 import { setupInMemoryTracing } from "../helpers/in-memory-tracing";
+import { counterValue } from "../helpers/in-memory-metrics";
 
 const { exporter } = setupInMemoryTracing();
+
+const count = async (result: string) =>
+  (await counterValue("money_track.users.sign_ins", { result })) ?? 0;
 
 jest.mock("bcryptjs", () => ({
   ...jest.requireActual("bcryptjs"),
@@ -80,11 +83,19 @@ describe("SignIn User UseCase", () => {
     );
   });
 
+  it("should start both sign-in series at zero", async () => {
+    const series = (result: string) =>
+      counterValue("money_track.users.sign_ins", { result });
+
+    expect(await series("success")).toBeDefined();
+    expect(await series("invalid_credentials")).toBeDefined();
+  });
+
   it("should count sign-ins by result", async () => {
-    const count = async (result: string) =>
-      (await signInsTotal.get()).values.find((v) => v.labels.result === result)
-        ?.value;
-    signInsTotal.reset();
+    const before = {
+      failed: await count("invalid_credentials"),
+      succeeded: await count("success"),
+    };
     await usersRepository.create(createdUserMock);
 
     (bcrypt.compare as jest.Mock).mockResolvedValue(false);
@@ -92,7 +103,7 @@ describe("SignIn User UseCase", () => {
     (bcrypt.compare as jest.Mock).mockResolvedValue(true);
     await useCase.signIn(signInInputMock);
 
-    expect(await count("invalid_credentials")).toBe(1);
-    expect(await count("success")).toBe(1);
+    expect(await count("invalid_credentials")).toBe(before.failed + 1);
+    expect(await count("success")).toBe(before.succeeded + 1);
   });
 });

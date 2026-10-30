@@ -3,18 +3,16 @@ import { APP_GUARD } from "@nestjs/core";
 import { AuthModule } from "./application/auth/auth.module";
 import { UsersControllersModule } from "./presentation/controllers/users-controllers.module";
 import { HealthControllersModule } from "./presentation/controllers/health/health-controllers.module";
-import { MetricsControllersModule } from "./presentation/controllers/metrics/metrics-controllers.module";
 import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
 import { LoggerModule } from "nestjs-pino";
 import { loggerOptions } from "./shared/observability/logger-options";
-import { shutdownTracing } from "./shared/observability/tracing";
+import { shutdownTelemetry } from "./shared/observability/telemetry";
 
 @Module({
   imports: [
     LoggerModule.forRoot(loggerOptions("users-service")),
     UsersControllersModule,
     HealthControllersModule,
-    MetricsControllersModule,
     AuthModule,
     ThrottlerModule.forRoot([
       {
@@ -32,8 +30,8 @@ import { shutdownTracing } from "./shared/observability/tracing";
   ],
 })
 export class AppModule implements OnApplicationShutdown {
-  // Envia os spans que ainda estão no buffer antes de o processo sair.
+  // Envia os spans e as métricas que ainda estão no buffer antes de o processo sair.
   onApplicationShutdown(): Promise<void> {
-    return shutdownTracing();
+    return shutdownTelemetry();
   }
 }

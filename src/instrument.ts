@@ -1,4 +1,4 @@
 import "dotenv/config";
-import { startTracing } from "./shared/observability/tracing";
+import { startTelemetry } from "./shared/observability/telemetry";
 
-startTracing("users-service");
+startTelemetry("users-service");

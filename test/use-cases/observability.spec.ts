@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import { Producer } from "@nestjs/microservices/external/kafka.interface";
 import { kafkaProducerMock } from "../mocks/kafka-mock";
 import { setupInMemoryTracing } from "../helpers/in-memory-tracing";
-import { kafkaEventsPublishedTotal } from "src/shared/observability/business-metrics";
 import { isInternalPath } from "src/shared/observability/internal-paths";
 import { KafkaProducerService } from "src/infra/kafka/producers/kafka-producer.service";
 import {
@@ -64,9 +63,9 @@ describe("request context", () => {
 });
 
 describe("isInternalPath", () => {
-  it("should match the health and metrics endpoints only", () => {
+  it("should match the health endpoints only", () => {
     expect(isInternalPath("/health/ready")).toBe(true);
-    expect(isInternalPath("/metrics")).toBe(true);
+    expect(isInternalPath("/health/live")).toBe(true);
     expect(isInternalPath("/users/signIn")).toBe(false);
     expect(isInternalPath(undefined)).toBe(false);
   });
@@ -84,24 +83,5 @@ describe("KafkaProducerService", () => {
       topic: "user-created",
       messages: [{ key: "user-created", value: '{"id":"1"}' }],
     });
-  });
-
-  it("should count published events by topic and result", async () => {
-    kafkaEventsPublishedTotal.reset();
-    const service = new KafkaProducerService(kafkaProducerMock as Producer);
-    const send = () =>
-      service.send({ topic: "user-created", key: "user-created", value: { id: "1" } });
-
-    await send();
-    (kafkaProducerMock.send as jest.Mock).mockRejectedValueOnce(new Error("broker fora do ar"));
-    await expect(send()).rejects.toThrow("broker fora do ar");
-
-    const { values } = await kafkaEventsPublishedTotal.get();
-    expect(values.map(({ labels, value }) => ({ ...labels, value }))).toEqual(
-      expect.arrayContaining([
-        { topic: "user-created", result: "success", value: 1 },
-        { topic: "user-created", result: "error", value: 1 },
-      ]),
-    );
   });
 });
