@@ -11,5 +11,6 @@ export const signInsTotal = meter.createCounter("money_track.users.sign_ins", {
 });
 
 // Séries que só nasceriam no primeiro incremento: começar em 0 deixa o rate() correto desde o início.
+signUpsTotal.add(0);
 signInsTotal.add(0, { result: "success" });
 signInsTotal.add(0, { result: "invalid_credentials" });
