@@ -44,6 +44,11 @@ describe("Create User UseCase", () => {
     );
   });
 
+  // Primeiro do arquivo: nenhum cadastro aconteceu ainda.
+  it("should start the sign-up series at zero", async () => {
+    expect(await counterValue("money_track.users.signups")).toBe(0);
+  });
+
   it("should be defined", () => {
     expect(useCase).toBeDefined();
     expect(usersRepository).toBeDefined();
